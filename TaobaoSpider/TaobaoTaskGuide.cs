@@ -71,6 +71,7 @@ namespace TaobaoSpider
 				default:
 					throw new ArgumentOutOfRangeException();
 			}
+			return cpr;
 		}
 
 		private void HandleProviderRate(TaskData td, ContentProcessResult cpr)

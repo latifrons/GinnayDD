@@ -21,6 +21,11 @@ namespace Ginnaydd.Distributed.TaskGuide
 			return true;
 		}
 
+		public override bool ShouldStore(Task task)
+		{
+			return true;
+		}
+
 		protected override ContentProcessResult Process(TaskData td)
 		{
 			throw new NotImplementedException();

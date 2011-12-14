@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using Ginnaydd.Distributed;
+using TaobaoSpider;
 
 namespace GinnayddGUI
 {
@@ -32,7 +33,7 @@ namespace GinnayddGUI
 			ins.workerManager.OnTaskDone += new TaskDoneEventHandler(DoTaskDone);
 			ins.taobaoTaskGuide.OnTaskProcessDone += new TaskProcessDoneEventHandler(DoTaskProcessDone);
 			//			ins.th.OnAllWorkDone += new AllWorkDoneEventHandler(DoAllWorkDone);
-			foreach (string s in Enum.GetNames(typeof(AmazonTaskType)))
+			foreach (string s in Enum.GetNames(typeof(TaobaoTaskType)))
 			{
 				comboBox1.Items.Add(s);
 			}
@@ -206,7 +207,7 @@ namespace GinnayddGUI
 		private void button4_Click(object sender, EventArgs e)
 		{
 			string s = comboBox1.SelectedItem as string;
-			AmazonTaskType att = (AmazonTaskType)Enum.Parse(typeof(AmazonTaskType), s);
+			TaobaoTaskType att = (TaobaoTaskType)Enum.Parse(typeof(TaobaoTaskType), s);
 			if (!string.IsNullOrEmpty(txtNewTask.Text) && txtNewTask.Text.StartsWith("http://"))
 			{
 				ins.sqlServerTaskPool.ProduceTask(new Task
