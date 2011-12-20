@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TaobaoSpider
+namespace TaobaoSpider.Model
 {
 	public class Seller
 	{
@@ -154,71 +154,10 @@ namespace TaobaoSpider
 			get { return pinvoice; }
 			set { pinvoice = value; }
 		}
-	}
-	public class Item
-	{
-		private int itemID;
-		private int uniqID;
-		private string name;
-		private double price;
-		private double freight;
-		private string location;
-		private int sellerTaobaoID;
-		private string urlLink;
-		private int recentDeal;
 
-		public int ItemId
+		public override string ToString()
 		{
-			get { return itemID; }
-			set { itemID = value; }
-		}
-
-		public int UniqId
-		{
-			get { return uniqID; }
-			set { uniqID = value; }
-		}
-
-		public string Name
-		{
-			get { return name; }
-			set { name = value; }
-		}
-
-		public double Price
-		{
-			get { return price; }
-			set { price = value; }
-		}
-
-		public double Freight
-		{
-			get { return freight; }
-			set { freight = value; }
-		}
-
-		public string Location
-		{
-			get { return location; }
-			set { location = value; }
-		}
-
-		public int SellerTaobaoId
-		{
-			get { return sellerTaobaoID; }
-			set { sellerTaobaoID = value; }
-		}
-
-		public string UrlLink
-		{
-			get { return urlLink; }
-			set { urlLink = value; }
-		}
-
-		public int RecentDeal
-		{
-			get { return recentDeal; }
-			set { recentDeal = value; }
+			return string.Format("SellerId: {0}, TaobaoId: {1}, Credit: {2}, StartTime: {3}, Rmatch: {4}, Pmatch: {5}, Rservice: {6}, Pservice: {7}, Rspeed: {8}, Pspeed: {9}, Refunddays: {10}, Refundrate: {11}, Complaint: {12}, Penalty: {13}, Goodrate: {14}, IsTmall: {15}, Pprotect: {16}, Psevendays: {17}, Pcharge: {18}, Preal: {19}, Pinvoice: {20}", sellerId, taobaoID, credit, startTime, rmatch, pmatch, rservice, pservice, rspeed, pspeed, refunddays, refundrate, complaint, penalty, goodrate, isTmall, pprotect, psevendays, pcharge, preal, pinvoice);
 		}
 	}
 }

@@ -4,12 +4,24 @@ using System.Linq;
 using System.Net;
 using System.Net.Cache;
 using System.Text;
+using System.Text.RegularExpressions;
+using Ginnay.ProxySpider;
 using Ginnaydd.Distributed;
+using HtmlAgilityPack;
+using TaobaoSpider.Model;
+using HAH = Wimlab.Utilities.HTML.HtmlAgilityHelper;
 
 namespace TaobaoSpider
 {
 	public class TaobaoTaskGuide : AbstractTaskGuide
 	{
+		static Regex RegexShopCount = new Regex(@"此款宝贝(?<number>\d+)家店铺在售");
+		static Regex RegexRecentSellCount = new Regex(@"最近成交(?<number>\d+)笔");
+
+		static Regex RegexSellerID = new Regex(@"user_number_id=(?<number>\d+)");
+
+		private static string RateURL = "http://rate.taobao.com/user-rate-#UID#.htm";
+
 		private string storePath;
 		private string connectionString;
 		public TaobaoTaskGuide(string storePath, string connectionString)
@@ -56,17 +68,20 @@ namespace TaobaoSpider
 
 		protected override ContentProcessResult Process(TaskData td)
 		{
-			ContentProcessResult cpr  =new ContentProcessResult();
+			ContentProcessResult cpr = new ContentProcessResult();
+			TaskProcess tp = new TaskProcess();
+			tp.TaskData = td;
+			tp.CpResult = cpr;
 			switch ((TaobaoTaskType)td.Task.Type)
 			{
 				case TaobaoTaskType.COMBINED_LIST:
-					HandleCombinedList(td, cpr);
+					HandleCombinedList(tp);
 					break;
 				case TaobaoTaskType.PROVIDER_LIST:
-					HandleProviderList(td, cpr);
+					HandleProviderList(tp);
 					break;
 				case TaobaoTaskType.PROVIDER_RATE:
-					HandleProviderRate(td, cpr);
+					HandleProviderRate(tp);
 					break;
 				default:
 					throw new ArgumentOutOfRangeException();
@@ -74,28 +89,219 @@ namespace TaobaoSpider
 			return cpr;
 		}
 
-		private void HandleProviderRate(TaskData td, ContentProcessResult cpr)
+		private void HandleProviderRate(TaskProcess tp)
 		{
 			throw new NotImplementedException();
 		}
 
-		private void HandleProviderList(TaskData td, ContentProcessResult cpr)
+		private void HandleProviderList(TaskProcess tp)
 		{
 			throw new NotImplementedException();
 		}
 
-		private void HandleCombinedList(TaskData td, ContentProcessResult cpr)
+		private void HandleCombinedList(TaskProcess tp)
 		{
-			throw new NotImplementedException();
+			string listPath = @"//div[@id='list-content']//li[@class='list-item']";
+
+			HtmlDocument doc = new HtmlDocument();
+			string html = Encoding.Default.GetString(tp.TaskData.Bytes);
+
+			HtmlNode root = GetRoot(html);
+			if (root == null)
+			{
+				FailProcess(tp);
+				return;
+			}
+
+			HtmlNodeCollection list = root.SelectNodes(listPath);
+			if (list == null)
+			{
+				FailProcess(tp);
+				return;
+			}
+
+			foreach (HtmlNode node in list)
+			{
+				//only 1 shop?
+				string count = HAH.SafeGetSuccessorInnerText(node, @".//div[@class='legend2']/a");
+				if (string.IsNullOrEmpty(count))
+				{
+					LogMissing("count", count);
+				}
+				else
+				{
+					Match m = RegexShopCount.Match(count);
+					if (m.Success)
+					{
+						int c = Int32.Parse(m.Groups["number"].Value);
+						if (c == 1)
+						{
+							//single shop
+							HandleCombinedListSingleShop(tp, node);
+						}
+						else
+						{
+							HandleCombinedListMultiShops(tp, node);
+						}
+					}
+					else
+					{
+						LogMissing("count", count);
+					}
+				}
+			}
+		}
+
+
+		private void HandleCombinedListSingleShop(TaskProcess tp, HtmlNode node)
+		{
+			#region build an item
+			Item i = new Item();
+
+			string freight = HAH.SafeGetSuccessorInnerText(node, @".//li[@class='shipment']/span[@class='fee']");
+			if (freight != null && freight.Length > 3)
+			{
+				//运费：8.00
+				string freightD = freight.Substring(3);
+				double d;
+				if (double.TryParse(freightD, out d))
+				{
+					i.Freight = d;
+				}
+				else
+				{
+					LogMissing("freight", freightD);
+				}
+			}
+			else
+			{
+				LogMissing("freight", freight);
+			}
+
+			i.Name = HAH.SafeGetSuccessorAttributeStringValue(node, @".//a[@class='EventCanSelect']", "title");
+			if (i.Name == null)
+			{
+				LogMissing("Name", node.InnerHtml);
+			}
+			i.Location = HAH.SafeGetSuccessorInnerText(node, @".//li[@class='shipment']/span[@class='loc']");
+			if (i.Location == null)
+			{
+				LogMissing("Location", node.InnerHtml);
+			}
+			string price = HAH.SafeGetSuccessorInnerText(node, @".//li[@class='price']/em");
+			if (!string.IsNullOrEmpty(price))
+			{
+				//359.00
+				double d;
+				if (double.TryParse(price, out d))
+				{
+					i.Price = d;
+				}
+				else
+				{
+					LogMissing("price", price);
+				}
+			}
+			else
+			{
+				LogMissing("price", price);
+			}
+
+			i.RecentDeal = 0;
+			string recentDeal = HAH.SafeGetSuccessorInnerText(node, @".//li[@class='price']/span");
+
+			if (!string.IsNullOrEmpty(recentDeal))
+			{
+				Match m = RegexRecentSellCount.Match(recentDeal);
+				if (m.Success)
+				{
+					i.RecentDeal = Int32.Parse(m.Value);
+				}
+			}
+
+			string sellerID = HAH.SafeGetSuccessorAttributeStringValue(node, @".//li[@class='seller']/a", "href");
+
+			if (!string.IsNullOrEmpty(sellerID))
+			{
+				Match m = RegexSellerID.Match(sellerID);
+				if (m.Success)
+				{
+					i.SellerTaobaoId = Int32.Parse(m.Value);
+				}
+				else
+				{
+					LogMissing("SellerID", sellerID);
+				}
+			}
+			else
+			{
+				LogMissing("SellerID", node.InnerHtml);
+			}
+
+			i.UniqId = 0;
+			i.UrlLink = HAH.SafeGetSuccessorAttributeStringValue(node, ".//a[@class='EventCanSelect']", "href");
+			#endregion
+			#region build new task
+			//Seller
+			tp.CpResult.NewTasks.Add(new Task
+			                         	{
+											Url = RateURL.Replace("#UID#",i.SellerTaobaoId.ToString()),
+											Type = (int)TaobaoTaskType.PROVIDER_RATE,
+			                         	});
+			#endregion
+
+		}
+		private void HandleCombinedListMultiShops(TaskProcess tp, HtmlNode node)
+		{
+
+		}
+		private void FailProcess(TaskProcess tp)
+		{
+			tp.CpResult.Success = false;
+		}
+		private HtmlNode GetRoot(string html)
+		{
+			HtmlDocument doc = new HtmlDocument();
+
+			doc.LoadHtml(html);
+			HtmlNode root = doc.DocumentNode;
+			return root;
+		}
+		private void LogMissing(string attribute, string textParse)
+		{
+			Console.Error.WriteLine("Missing {0} in {1}", attribute, textParse);
+		}
+	}
+
+	public class TaskProcess
+	{
+		private TaskData taskData;
+		private HtmlNode htmlRoot;
+		private ContentProcessResult cpResult;
+
+		public TaskData TaskData
+		{
+			get { return taskData; }
+			set { taskData = value; }
+		}
+
+		public HtmlNode HtmlRoot
+		{
+			get { return htmlRoot; }
+			set { htmlRoot = value; }
+		}
+
+		public ContentProcessResult CpResult
+		{
+			get { return cpResult; }
+			set { cpResult = value; }
 		}
 	}
 
 	public enum TaobaoTaskType
 	{
-		COMBINED_LIST =0,
+		COMBINED_LIST = 0,
 		PROVIDER_LIST = 1,
 		PROVIDER_RATE = 2,
-
-
 	}
 }
