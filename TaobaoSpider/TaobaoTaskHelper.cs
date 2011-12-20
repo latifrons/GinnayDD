@@ -10,6 +10,6 @@ namespace TaobaoSpider
 {
 	public class TaobaoTaskHelper
 	{
-		
+		//Helper
 	}
 }
