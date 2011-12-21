@@ -16,7 +16,7 @@ namespace Ginnaydd.Distributed
 		protected bool canStop = false;
 		protected int globalTimeout;
  		protected object locker = new object();
-		protected int maxWorkers;
+		protected int maxWorkers = 1;
 		private ProducerConsumerQueue<TaskData> processQueue = new ProducerConsumerQueue<TaskData>();
 		protected List<Thread> workThreads = new List<Thread>();
 

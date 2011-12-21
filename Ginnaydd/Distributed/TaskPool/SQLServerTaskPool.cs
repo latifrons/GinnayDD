@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using Ginnaydd.Utilities;
+using TaobaoSpider.BLL;
 
 namespace Ginnaydd.Distributed.TaskPool
 {
@@ -41,7 +42,7 @@ values(@url,@state,@retrytimes,@context,@type,@urlhash)";
 		object daemonLocker = new object();
 
 		private ProducerConsumerQueue<EnqueueTaskInfo> enqueueQueue = new ProducerConsumerQueue<EnqueueTaskInfo>();
-		private string connectionString;
+//		private string connectionString;
 
 		public class EnqueueTaskInfo
 		{
@@ -91,11 +92,11 @@ values(@url,@state,@retrytimes,@context,@type,@urlhash)";
 			set { enqueueQueue = value; }
 		}
 
-		public string ConnectionString
-		{
-			get { return connectionString; }
-			set { connectionString = value; }
-		}
+//		public string ConnectionString
+//		{
+//			get { return connectionString; }
+//			set { connectionString = value; }
+//		}
 
 		public List<Thread> DaemonEnqueueThread
 		{
@@ -372,7 +373,7 @@ values(@url,@state,@retrytimes,@context,@type,@urlhash)";
 		{
 			if (task.TaskId != 0)
 			{
-				SqlConnection conn = GetConnection();
+				SqlConnection conn = Database.GetConnection();
 				SqlCommand cmd = new SqlCommand(updateSQL, conn);
 //				cmd.Transaction = transaction;
 				cmd.Parameters.AddWithValue("id", task.TaskId);
@@ -388,12 +389,12 @@ values(@url,@state,@retrytimes,@context,@type,@urlhash)";
 			}
 		}
 
-		protected SqlConnection GetConnection()
-		{
-			SqlConnection conn = new SqlConnection(connectionString);
-			conn.Open();
-			return conn;
-		}
+//		protected SqlConnection GetConnection()
+//		{
+//			SqlConnection conn = new SqlConnection(connectionString);
+//			conn.Open();
+//			return conn;
+//		}
 
 		public override void FinishTask(Task task)
 		{
@@ -406,7 +407,7 @@ values(@url,@state,@retrytimes,@context,@type,@urlhash)";
 		protected void InsertTask(IEnumerable<Task> tasks, TaskState state)
 		{
 			SqlCommand cmd = null;
-			SqlConnection conn = GetConnection();
+			SqlConnection conn = Database.GetConnection();
 			if (allowDuplicatedTask)
 			{
 				cmd = new SqlCommand(insertSQL, conn);
@@ -452,7 +453,7 @@ values(@url,@state,@retrytimes,@context,@type,@urlhash)";
 
 		protected void LoadFromDB(int limit)
 		{
-			SqlConnection conn = GetConnection();
+			SqlConnection conn = Database.GetConnection();
 			SqlCommand cmd = new SqlCommand(selectSQL, conn);
 			//cmd.Transaction = conn.BeginTransaction();
 			cmd.Parameters.Add("state", SqlDbType.Int);
@@ -491,7 +492,7 @@ values(@url,@state,@retrytimes,@context,@type,@urlhash)";
 		{
 			try
 			{
-				SqlConnection conn = GetConnection();
+				SqlConnection conn = Database.GetConnection();
 				SqlCommand cmd = new SqlCommand(countStateTypeSQL, conn);
 				cmd.Parameters.Add("state", SqlDbType.Int);
 				cmd.Parameters.Add("type", SqlDbType.Int);
@@ -512,7 +513,7 @@ values(@url,@state,@retrytimes,@context,@type,@urlhash)";
 		{
 			try
 			{
-				SqlConnection conn = GetConnection();
+				SqlConnection conn = Database.GetConnection();
 				SqlCommand cmd = new SqlCommand(countStateSQL, conn);
 				cmd.Parameters.Add("state", SqlDbType.Int);
 
@@ -536,7 +537,7 @@ values(@url,@state,@retrytimes,@context,@type,@urlhash)";
 		private void UpdateAllInMemory()
 		{
 			string sql = "Update Task set state = @state where state = @state2";
-			SqlConnection conn = GetConnection();
+			SqlConnection conn = Database.GetConnection();
 			SqlCommand cmd = new SqlCommand(sql, conn);
 			cmd.Parameters.Add("state", SqlDbType.Int);
 			cmd.Parameters.Add("state2", SqlDbType.Int);

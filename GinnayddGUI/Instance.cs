@@ -21,7 +21,7 @@ namespace GinnayddGUI
 		public SQLServerTaskPool sqlServerTaskPool;
 		public AmazonPictureTaskGuide amazonPictureTaskGuide;
 		public string storePath = @"E:\Dev\Grab4\";
-		private const string dbConnectionString = @"Data Source=localhost;Initial Catalog=AmazonGrab;User Id=wim;Password=wimlab;";
+//		private const string dbConnectionString = @"Data Source=localhost;Initial Catalog=AmazonGrab;User Id=wim;Password=wimlab;";
 		private ProxyManager proxyManager;
 
 		public Instance()
@@ -29,13 +29,13 @@ namespace GinnayddGUI
 			workerManager = new WorkerManager();
 			intervalProxyPool = new IntervalProxyPool();
 			sqlServerTaskPool = new SQLServerTaskPool();
-			sqlServerTaskPool.ConnectionString = dbConnectionString;
+//			sqlServerTaskPool.ConnectionString = dbConnectionString;
 			sqlServerTaskPool.InitTable();
 			sqlServerTaskPool.DaemonRestTime = 2000;
 			sqlServerTaskPool.MaxDaemonEnqueueThreadCount =2;
 			
 
-			amazonPictureTaskGuide = new AmazonPictureTaskGuide(storePath, dbConnectionString);
+			amazonPictureTaskGuide = new AmazonPictureTaskGuide(storePath);
 			amazonPictureTaskGuide.GlobalTimeout = 60000;
 			amazonPictureTaskGuide.MaxWorkers = 1;
 

@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using Ginnay.ProxySpider;
 using Ginnaydd.Distributed;
 using HtmlAgilityPack;
+using TaobaoSpider.BLL;
 using TaobaoSpider.Model;
 using HAH = Wimlab.Utilities.HTML.HtmlAgilityHelper;
 
@@ -19,16 +20,19 @@ namespace TaobaoSpider
 		static Regex RegexRecentSellCount = new Regex(@"最近成交(?<number>\d+)笔");
 
 		static Regex RegexSellerID = new Regex(@"user_number_id=(?<number>\d+)");
+		static Regex RegexUniqID = new Regex(@"uniqpid=(?<number>-?\d+)");
+
+		private static string UNIQ_ID = @"uniqID=";
 
 		private static string RateURL = "http://rate.taobao.com/user-rate-#UID#.htm";
 
 		private string storePath;
 		private string connectionString;
-		public TaobaoTaskGuide(string storePath, string connectionString)
-		{
-			this.storePath = storePath;
-			this.connectionString = connectionString;
-		}
+//		public TaobaoTaskGuide(string storePath, string connectionString)
+//		{
+//			this.storePath = storePath;
+//			this.connectionString = connectionString;
+//		}
 		public override string GetLocalStorePath(Task task)
 		{
 			return null;
@@ -72,6 +76,7 @@ namespace TaobaoSpider
 			TaskProcess tp = new TaskProcess();
 			tp.TaskData = td;
 			tp.CpResult = cpr;
+			
 			switch ((TaobaoTaskType)td.Task.Type)
 			{
 				case TaobaoTaskType.COMBINED_LIST:
@@ -101,11 +106,14 @@ namespace TaobaoSpider
 
 		private void HandleCombinedList(TaskProcess tp)
 		{
-			string listPath = @"//div[@id='list-content']//li[@class='list-item']";
+			string html = Encoding.Default.GetString(tp.TaskData.Bytes);
+			if (!Validate(html))
+			{
+				tp.CpResult.Success = false;
+				return;
+			}
 
 			HtmlDocument doc = new HtmlDocument();
-			string html = Encoding.Default.GetString(tp.TaskData.Bytes);
-
 			HtmlNode root = GetRoot(html);
 			if (root == null)
 			{
@@ -113,12 +121,13 @@ namespace TaobaoSpider
 				return;
 			}
 
-			HtmlNodeCollection list = root.SelectNodes(listPath);
+			HtmlNodeCollection list = root.SelectNodes(@"//div[@id='list-content']//li[@class='list-item']");
 			if (list == null)
 			{
 				FailProcess(tp);
 				return;
 			}
+			bool success = true;
 
 			foreach (HtmlNode node in list)
 			{
@@ -137,23 +146,34 @@ namespace TaobaoSpider
 						if (c == 1)
 						{
 							//single shop
-							HandleCombinedListSingleShop(tp, node);
+							success &= HandleCombinedListSingleShop(tp, node);
 						}
 						else
 						{
-							HandleCombinedListMultiShops(tp, node);
+							success &= HandleCombinedListMultiShops(tp, node);
 						}
 					}
 					else
 					{
 						LogMissing("count", count);
+						success = false;
 					}
 				}
+				if (!success)
+				{
+					break;
+				}
 			}
+			tp.CpResult.Success = success;
+		}
+
+		private bool Validate(string html)
+		{
+			return html.Contains("taobao") && html.LastIndexOf("/html") != -1;
 		}
 
 
-		private void HandleCombinedListSingleShop(TaskProcess tp, HtmlNode node)
+		private bool HandleCombinedListSingleShop(TaskProcess tp, HtmlNode node)
 		{
 			#region build an item
 			Item i = new Item();
@@ -171,22 +191,26 @@ namespace TaobaoSpider
 				else
 				{
 					LogMissing("freight", freightD);
+					return false;
 				}
 			}
 			else
 			{
 				LogMissing("freight", freight);
+				return false;
 			}
 
 			i.Name = HAH.SafeGetSuccessorAttributeStringValue(node, @".//a[@class='EventCanSelect']", "title");
 			if (i.Name == null)
 			{
 				LogMissing("Name", node.InnerHtml);
+				return false;
 			}
 			i.Location = HAH.SafeGetSuccessorInnerText(node, @".//li[@class='shipment']/span[@class='loc']");
 			if (i.Location == null)
 			{
 				LogMissing("Location", node.InnerHtml);
+				return false;
 			}
 			string price = HAH.SafeGetSuccessorInnerText(node, @".//li[@class='price']/em");
 			if (!string.IsNullOrEmpty(price))
@@ -200,11 +224,13 @@ namespace TaobaoSpider
 				else
 				{
 					LogMissing("price", price);
+					return false;
 				}
 			}
 			else
 			{
 				LogMissing("price", price);
+				return false;
 			}
 
 			i.RecentDeal = 0;
@@ -215,7 +241,7 @@ namespace TaobaoSpider
 				Match m = RegexRecentSellCount.Match(recentDeal);
 				if (m.Success)
 				{
-					i.RecentDeal = Int32.Parse(m.Value);
+					i.RecentDeal = Int32.Parse(m.Groups["number"].Value);
 				}
 			}
 
@@ -226,20 +252,24 @@ namespace TaobaoSpider
 				Match m = RegexSellerID.Match(sellerID);
 				if (m.Success)
 				{
-					i.SellerTaobaoId = Int32.Parse(m.Value);
+					i.SellerTaobaoId = Int32.Parse(m.Groups["number"].Value);
 				}
 				else
 				{
 					LogMissing("SellerID", sellerID);
+					return false;
 				}
 			}
 			else
 			{
 				LogMissing("SellerID", node.InnerHtml);
+				return false;
 			}
 
 			i.UniqId = 0;
 			i.UrlLink = HAH.SafeGetSuccessorAttributeStringValue(node, ".//a[@class='EventCanSelect']", "href");
+
+			OpsItem.Insert(i);
 			#endregion
 			#region build new task
 			//Seller
@@ -250,10 +280,38 @@ namespace TaobaoSpider
 			                         	});
 			#endregion
 
+			return true;
 		}
-		private void HandleCombinedListMultiShops(TaskProcess tp, HtmlNode node)
+		private bool HandleCombinedListMultiShops(TaskProcess tp, HtmlNode node)
 		{
+			string link = HAH.SafeGetSuccessorAttributeStringValue(node, @".//div[@class='legend2']/a", "href");
+			if (link == null)
+			{
+				LogMissing("URL",node.InnerHtml);
+				return false;
+			}
+			Match m = RegexUniqID.Match(link);
+			
+			if (m.Success)
+			{
+				string uniqIDs = m.Groups["number"].Value;
+				tp.CpResult.NewTasks.Add(new Task
+				{
+					Type = (int)TaobaoTaskType.PROVIDER_LIST,
+					Url = FixRelativeURL(link,tp.TaskData.Task.Host),
+					Context = UNIQ_ID + uniqIDs,
+				});
+			}
+			return true;
+		}
 
+		private string FixRelativeURL(string url, string host)
+		{
+			if (url.StartsWith("http://"))
+			{
+				return url;
+			}
+			return "http://" + host + url;
 		}
 		private void FailProcess(TaskProcess tp)
 		{

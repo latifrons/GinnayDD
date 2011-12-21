@@ -31,12 +31,12 @@ namespace Ginnaydd.Distributed.ContentProcessor
 		public const string URL_PREFIX = "http://www.amazon.cn";
 		private object logLock = new object();
 
-		public AmazonPictureTaskGuide(string storePath,string connectionString)
+		public AmazonPictureTaskGuide(string storePath)
 		{
 			this.storePath = storePath;
 			this.helper  =new AmazonHelper();
 			helper.StorePath = storePath;
-			helper.ConnectionString = connectionString;
+//			helper.ConnectionString = connectionString;
 			helper.LoadTypes();
 //			helper.InitTable();
 		}

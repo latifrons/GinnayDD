@@ -12,6 +12,27 @@ namespace Ginnaydd.Distributed
 		private int taskID;
 		private int type;
 		private string localPath;
+
+		public string Host
+		{
+			get
+			{
+				int plen = 0;
+				if (url.StartsWith("http://"))
+				{
+					plen = 7;
+				}
+				int i = url.IndexOf('/', plen);
+				if (i == -1)
+				{
+					return url.Substring(plen);
+				}
+				else
+				{
+					return url.Substring(plen, i - plen);
+				}
+			}
+		}
 		public string Url
 		{
 			get { return url; }

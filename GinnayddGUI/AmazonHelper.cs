@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Web;
 using Ginnaydd.Distributed.ContentProcessor;
+using TaobaoSpider.BLL;
 
 namespace Ginnaydd.Distributed.TaskGuide
 {
@@ -31,7 +32,7 @@ values (@URL,@LocalFile,@FileType,@URLHash)";
 		//object locker = new object();
 		Semaphore semaphore = new Semaphore(15,15);
 		private int webSequence = 0;
-		private string connectionString;
+//		private string connectionString;
 		object webSequenceLock = new object();
 		object imageSequenceLock = new object();
 		private object locker = new object();
@@ -43,14 +44,14 @@ values (@URL,@LocalFile,@FileType,@URLHash)";
 			set { storePath = value; }
 		}
 
-		public string ConnectionString
-		{
-			get { return connectionString; }
-			set { connectionString = value; }
-		}
+//		public string ConnectionString
+//		{
+//			get { return connectionString; }
+//			set { connectionString = value; }
+//		}
 		public void LoadTypes()
 		{
-			SqlConnection conn = GetConnection();
+			SqlConnection conn = Database.GetConnection();
 			DataTable dt = new DataTable();
 			SqlDataAdapter adapter = new SqlDataAdapter(loadTypesSQL,conn);
 			adapter.Fill(dt);
@@ -147,8 +148,8 @@ values (@URL,@LocalFile,@FileType,@URLHash)";
 			string s;
 //			Console.WriteLine("Enter");
 //			long a = Environment.TickCount;
-			
-			SqlConnection conn = GetConnection();
+
+			SqlConnection conn = Database.GetConnection();
 //			SqlTransaction transaction = conn.BeginTransaction();
 			{
 				SqlCommand cmd = new SqlCommand(selectFileSQL, conn);
@@ -239,13 +240,13 @@ values (@URL,@LocalFile,@FileType,@URLHash)";
 			}
 		}
 
-		private SqlConnection GetConnection()
-		{
-//			SqlConnection conn = new SqlConnection("Data Source=" + dbPath + ";Version=3;Pooling=True;Max Pool Size=100;");
-			SqlConnection conn = new SqlConnection(ConnectionString);
-			conn.Open();			
-			return conn;
-		}
+//		private SqlConnection GetConnection()
+//		{
+////			SqlConnection conn = new SqlConnection("Data Source=" + dbPath + ";Version=3;Pooling=True;Max Pool Size=100;");
+//			SqlConnection conn = new SqlConnection(ConnectionString);
+//			conn.Open();			
+//			return conn;
+//		}
 		private int GetNextWebSequence(SqlConnection conn,SqlTransaction transaction)
 		{
 			Monitor.Enter(webSequenceLock);
@@ -278,8 +279,8 @@ values (@URL,@LocalFile,@FileType,@URLHash)";
 
 		private void ImageToFilePath(Task task, out string filePath, out string filename)
 		{
-			
-			SqlConnection conn = GetConnection();
+
+			SqlConnection conn = Database.GetConnection();
 //			SqlTransaction transaction = conn.BeginTransaction();
 
 			string s = null;
@@ -388,7 +389,7 @@ values (@URL,@LocalFile,@FileType,@URLHash)";
 		public void s()
 		{
 			string sql = "select * from [File]";
-			SqlConnection conn = GetConnection();
+			SqlConnection conn = Database.GetConnection();
 			SqlDataAdapter a = new SqlDataAdapter(sql, conn);
 			DataTable dt = new DataTable();
 			a.Fill(dt);

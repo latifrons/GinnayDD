@@ -20,7 +20,7 @@ namespace GinnayddGUI
 		public SQLServerTaskPool sqlServerTaskPool;
 		public TaobaoTaskGuide taobaoTaskGuide;
 		public string storePath = @"E:\Dev\Grab4\";
-		private const string dbConnectionString = @"Data Source=localhost;Initial Catalog=TaobaoGrab;User Id=wim;Password=wimlab;";
+//		private const string dbConnectionString = @"Data Source=localhost;Initial Catalog=TaobaoGrab;User Id=sa;Password=1;";
 		private ProxyManager proxyManager;
 
 		public Instance()
@@ -28,13 +28,13 @@ namespace GinnayddGUI
 			workerManager = new WorkerManager();
 			intervalProxyPool = new IntervalProxyPool();
 			sqlServerTaskPool = new SQLServerTaskPool();
-			sqlServerTaskPool.ConnectionString = dbConnectionString;
+//			sqlServerTaskPool.ConnectionString = dbConnectionString;
 			sqlServerTaskPool.InitTable();
 			sqlServerTaskPool.DaemonRestTime = 2000;
 			sqlServerTaskPool.MaxDaemonEnqueueThreadCount =2;
 			
 
-			taobaoTaskGuide = new TaobaoTaskGuide(storePath,dbConnectionString);
+			taobaoTaskGuide = new TaobaoTaskGuide();
 			taobaoTaskGuide.GlobalTimeout = 60000;
 			taobaoTaskGuide.MaxWorkers = 1;
 
