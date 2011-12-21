@@ -71,20 +71,9 @@ namespace TaobaoSpider.Model
 			set { recentDeal = value; }
 		}
 
-		override public string ToString()
+		public override string ToString()
 		{
-			string str = String.Empty;
-			str = String.Concat(str, "ItemId = ", ItemId, "\r\n");
-			str = String.Concat(str, "UniqId = ", UniqId, "\r\n");
-			str = String.Concat(str, "Name = ", Name, "\r\n");
-			str = String.Concat(str, "Price = ", Price, "\r\n");
-			str = String.Concat(str, "Freight = ", Freight, "\r\n");
-			str = String.Concat(str, "Location = ", Location, "\r\n");
-			str = String.Concat(str, "SellerTaobaoId = ", SellerTaobaoId, "\r\n");
-			str = String.Concat(str, "UrlLink = ", UrlLink, "\r\n");
-			str = String.Concat(str, "RecentDeal = ", RecentDeal, "\r\n");
-			return str;
+			return string.Format("ItemId: {0}, UniqId: {1}, Name: {2}, Price: {3}, Freight: {4}, Location: {5}, SellerTaobaoId: {6}, UrlLink: {7}, RecentDeal: {8}", itemID, uniqID, name, price, freight, location, sellerTaobaoID, urlLink, recentDeal);
 		}
-		
 	}
 }

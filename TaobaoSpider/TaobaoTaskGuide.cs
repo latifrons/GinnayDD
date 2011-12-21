@@ -133,19 +133,17 @@ namespace TaobaoSpider
 			//好评率：98.30%
 			s.Goodrate = double.Parse(goodRate.Substring(4, goodRate.IndexOf("%") - 4));
 			s.IsTmall = root.SelectSingleNode(@".//div[@class='tmall-pro']") != null;
-
-			HtmlNodeCollection infos = root.SelectNodes(@".//div[@class='bd']/ul/li");
-			foreach (HtmlNode node in infos)
-			{
-				Match m = RegexCreateTime.Match(node.InnerText);
-				if (m.Success)
-				{
-					string date = m.Groups["time"].Value;
-					s.StartTime = DateTime.Parse(date);
-				}
-			}
-			
-			
+//
+//			HtmlNodeCollection infos = root.SelectNodes(@".//div[@class='bd']/ul/li");
+//			foreach (HtmlNode node in infos)
+//			{
+//				Match m = RegexCreateTime.Match(node.InnerText);
+//				if (m.Success)
+//				{
+//					string date = m.Groups["time"].Value;
+//					s.StartTime = DateTime.Parse(date);
+//				}
+//			}
 
 			//半年动态评分
 			{
@@ -154,7 +152,7 @@ namespace TaobaoSpider
 				{
 					string title = HAH.SafeGetSuccessorInnerText(node, @"./span[@class='title']");
 					string count = HAH.SafeGetSuccessorInnerText(node, @"./em[@class='count']");
-					HtmlNode percent = node.SelectSingleNode(@".//strong[contains(@class),'percent']");
+					HtmlNode percent = node.SelectSingleNode(@".//strong[contains(@class,'percent')]");
 					if (percent == null)
 					{
 						LogMissing(title,"Percent");
@@ -169,7 +167,7 @@ namespace TaobaoSpider
 					}
 
 					double d;
-					string rate = percent.InnerText;
+					string rate = percent.InnerText.Replace("%","");
 					if (rate=="----")
 					{
 						d = 0;
@@ -201,8 +199,23 @@ namespace TaobaoSpider
 					}
 				}
 			}
+			//保障
+			string text = HAH.SafeGetSuccessorInnerHtml(root, @".//div[@class='desc' or @class='promise']");
+			if (!string.IsNullOrEmpty(text))
+			{
+				s.Pprotect = text.Contains("消费者保障");
+				s.Psevendays = text.Contains("7天无理由退换货") || text.Contains("七天退换");
+				s.Preal = text.Contains("正品保障");
+				s.Pinvoice = text.Contains("提供发票");
+			}
+			else
+			{
+				LogMissing("Warrenty", text);
+			}
+			
 
 			//30天服务
+			/*
 			{
 				HtmlNodeCollection nodes = root.SelectNodes(@".//div[@class='each']");
 				foreach (var node in nodes)
@@ -230,7 +243,8 @@ namespace TaobaoSpider
 						}
 					}
 				}
-			}
+			}*/
+			OpsSeller.Insert(s);
 		}
 
 		private void HandleProviderList(TaskProcess tp)

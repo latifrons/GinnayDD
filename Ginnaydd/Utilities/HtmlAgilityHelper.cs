@@ -145,6 +145,23 @@ namespace Wimlab.Utilities.HTML
 			text = text.Replace("&amp;", "&");
 			return text;
 		}
+
+		public static string SafeGetSuccessorInnerHtml(HtmlNode node, string xpath)
+		{
+			if (node == null)
+			{
+				return null;
+			}
+			HtmlNode successor = node.SelectSingleNode(xpath);
+			if (successor != null)
+			{
+				return successor.InnerHtml;
+			}
+			else
+			{
+				return null;
+			}
+		}
 	}
 
 }

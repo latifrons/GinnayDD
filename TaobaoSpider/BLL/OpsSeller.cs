@@ -11,11 +11,11 @@ namespace TaobaoSpider.BLL
 	public class OpsSeller
 	{
 		private static string SQL_Insert =
-			@"INSERT INTO [TaobaoGrab].[dbo].[Seller]([taobaoid],[credit],[starttime],[rmatch],[pmatch],[rservice],[pservice],[rspeed],[pspeed],[refunddays],[refundrate],[complaint],[penalty],[goodrate],[istmall],[pprotect],[psevendays],[pcharge],[preal],[pinvoice])
-values (@taobaoid,@credit,@starttime,@rmatch,@pmatch,@rservice,@pservice,@rspeed,@pspeed,@refunddays,@refundrate,@complaint,@penalty,@goodrate,@istmall,@pprotect,@psevendays,@pcharge,@preal,@pinvoice)";
+			@"INSERT INTO [TaobaoGrab].[dbo].[Seller]([taobaoid],[credit],[starttime],[rmatch],[pmatch],[rservice],[pservice],[rspeed],[pspeed],[refunddays],[refundrate],[complaint],[penalty],[goodrate],[istmall],[pprotect],[psevendays],[preal],[pinvoice])
+values (@taobaoid,@credit,@starttime,@rmatch,@pmatch,@rservice,@pservice,@rspeed,@pspeed,@refunddays,@refundrate,@complaint,@penalty,@goodrate,@istmall,@pprotect,@psevendays,@preal,@pinvoice)";
 
 		private static string SQL_Select =
-			@"SELECT [sellerid],[taobaoid],[credit],[starttime],[rmatch],[pmatch],[rservice],[pservice],[rspeed],[pspeed],[refunddays],[refundrate],[complaint],[penalty],[goodrate],[istmall],[pprotect],[psevendays],[pcharge],[preal],[pinvoice]
+			@"SELECT [sellerid],[taobaoid],[credit],[starttime],[rmatch],[pmatch],[rservice],[pservice],[rspeed],[pspeed],[refunddays],[refundrate],[complaint],[penalty],[goodrate],[istmall],[pprotect],[psevendays],[preal],[pinvoice]
 FROM [TaobaoGrab].[dbo].[Seller]
 where sellerid = @sellerid";
 

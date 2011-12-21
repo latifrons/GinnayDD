@@ -17,10 +17,10 @@ namespace TaobaoSpider.Model
 		private double pservice;
 		private double rspeed;
 		private double pspeed;
-		private double refunddays;
-		private double refundrate;
-		private double complaint;
-		private int penalty;
+		private double? refunddays;
+		private double? refundrate;
+		private double? complaint;
+		private int? penalty;
 		private double? goodrate;
 		private bool isTmall;
 		private bool? pprotect;
@@ -122,7 +122,7 @@ namespace TaobaoSpider.Model
 		/// <summary>
 		/// 平均退款速度（天）
 		/// </summary>
-		public double Refunddays
+		public double? Refunddays
 		{
 			get { return refunddays; }
 			set { refunddays = value; }
@@ -131,7 +131,7 @@ namespace TaobaoSpider.Model
 		/// <summary>
 		/// 近30天退款率
 		/// </summary>
-		public double Refundrate
+		public double? Refundrate
 		{
 			get { return refundrate; }
 			set { refundrate = value; }
@@ -140,7 +140,7 @@ namespace TaobaoSpider.Model
 		/// <summary>
 		/// 近30天投诉率
 		/// </summary>
-		public double Complaint
+		public double? Complaint
 		{
 			get { return complaint; }
 			set { complaint = value; }
@@ -149,7 +149,7 @@ namespace TaobaoSpider.Model
 		/// <summary>
 		/// 近30天处罚数
 		/// </summary>
-		public int Penalty
+		public int? Penalty
 		{
 			get { return penalty; }
 			set { penalty = value; }

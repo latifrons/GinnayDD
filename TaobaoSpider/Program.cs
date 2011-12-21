@@ -41,15 +41,17 @@ namespace TaobaoSpider
 
 //			Item i = OpsItem.GetFirstModel(2);			
 //			i = OpsItem.GetFirstModel(3);
-			string s = File.ReadAllText("f:/dev/search.htm",Encoding.GetEncoding("GB2312"));
+			string s = File.ReadAllText("f:/dev/user.htm",Encoding.GetEncoding("GB2312"));
 			TaskData td = new TaskData
 							{
 								Bytes = Encoding.Default.GetBytes(s),
 								ProxyInfo = null,
 								Task = new Task
 								       	{
-								       		Url = @"http://s.taobao.com/search?q=%C3%DE%D2%C2+%C4%D0%D7%B0&style=grid&tab=all&source=tbsy&refpid=420462_1006&p4p_str=firstpage_pushleft%3D0%26lo1%3D0%26lo2%3D0%26nt%3D1&uniq=imgo#J_Filter",
-											Type = (int)TaobaoTaskType.COMBINED_LIST
+											Url = @"http://rate.taobao.com/user-rate-ff176d877242acae0c43891b47b78d90.htm",
+											Type = (int)TaobaoTaskType.PROVIDER_RATE,
+											Context = "324123",
+											
 								       	}
 							};
 			TaobaoTaskGuide g = new TaobaoTaskGuide();
