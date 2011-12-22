@@ -100,15 +100,19 @@ namespace Ginnaydd.Distributed
 			{
 				//file not ok
 				string path = args.Task.LocalPath;
-				try
+				if (taskGuide.ShouldStore(args.Task))
 				{
-					File.Delete(path);
+					try
+					{
+						File.Delete(path);
+						Console.WriteLine("MalFile deleted {0}", Path.GetFileName(path));
+					}
+					catch (IOException)
+					{
+
+					}
 				}
-				catch (IOException)
-				{
-					
-				}
-				Console.WriteLine("MalFile deleted {0}", Path.GetFileName(path));
+				
 				//re enqueue
 				taskPool.FailTask(args.Task);
 			}

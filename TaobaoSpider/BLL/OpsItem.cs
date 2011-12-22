@@ -12,22 +12,33 @@ namespace TaobaoSpider.BLL
 	{
 		#region Static SQL String Memebers
 		/// <remarks>This field represents the full SELECT string for the table Item, with the WHERE clause.</remarks>
-		internal static string _SQL_Select = "SELECT [itemid], [uniqid], [name], [price], [freight], [location], [sellertaobaoid], [urllink], [recentdeal] FROM [dbo].[Item] WHERE [itemid]=@itemid ";
+		internal static string _SQL_Select = "SELECT [itemid],[taobaoid], [uniqid],  [name], [price], [freight], [location], [sellertaobaoid], [urllink], [recentdeal] FROM [dbo].[Item] WHERE [itemid]=@itemid ";
 
 		/// <remarks>This field represents the full INSERT INTO string for the table Item.</remarks>
 		internal static string _SQL_Insert = @"INSERT INTO [TaobaoGrab].[dbo].[Item]
-           ([uniqid],[name],[price],[freight],[location],[sellertaobaoid],[urllink],[recentdeal])
+           ([taobaoid],[uniqid],[name],[price],[freight],[location],[sellertaobaoid],[urllink],[recentdeal])
 VALUES(
-@uniqid,@name,@price,@freight,@location,@sellertaobaoid,@urllink,@recentdeal
+@taobaoid,@uniqid,@name,@price,@freight,@location,@sellertaobaoid,@urllink,@recentdeal
 );
 select SCOPE_IDENTITY();
 ";
 
-		/// <remarks>This field represents the full UPDATE string for the table Item, with the WHERE clause.</remarks>
-		internal static string _SQL_Update = "UPDATE [dbo].[Item] SET [itemid] = @itemid, [uniqid] = @uniqid, [name] = @name, [price] = @price, [freight] = @freight, [location] = @location, [sellertaobaoid] = @sellertaobaoid, [urllink] = @urllink, [recentdeal] = @recentdeal WHERE [itemid]=@itemid ";
+		private static string SQL_Upsert =
+			@"SELECT [itemid],[taobaoid], [uniqid],  [name], [price], [freight], [location], [sellertaobaoid], [urllink], [recentdeal] FROM [dbo].[Item] 
+WHERE [taobaoid]=@taobaoid;
+if @@rowcount = 0
+INSERT INTO [TaobaoGrab].[dbo].[Item]
+           ([taobaoid],[uniqid],[name],[price],[freight],[location],[sellertaobaoid],[urllink],[recentdeal])
+VALUES(
+@taobaoid,@uniqid,@name,@price,@freight,@location,@sellertaobaoid,@urllink,@recentdeal
+)
+";
 
-		/// <remarks>This field represents the DELETE string for the table Item, with the WHERE clause.</remarks>
-		internal static string _SQL_Delete = "DELETE FROM [dbo].[Item] WHERE [itemid]=@itemid ";
+//		/// <remarks>This field represents the full UPDATE string for the table Item, with the WHERE clause.</remarks>
+//		internal static string _SQL_Update = "UPDATE [dbo].[Item] SET [itemid] = @itemid, [uniqid] = @uniqid, [name] = @name, [price] = @price, [freight] = @freight, [location] = @location, [sellertaobaoid] = @sellertaobaoid, [urllink] = @urllink, [recentdeal] = @recentdeal WHERE [itemid]=@itemid ";
+//
+//		/// <remarks>This field represents the DELETE string for the table Item, with the WHERE clause.</remarks>
+//		internal static string _SQL_Delete = "DELETE FROM [dbo].[Item] WHERE [itemid]=@itemid ";
 		#endregion
 
 
@@ -45,6 +56,22 @@ select SCOPE_IDENTITY();
 				i.ItemId = gid.Value;
 			}
 			return gid.HasValue;
+		}
+		public static bool Upsert(Item i)
+		{
+
+			SqlConnection conn = Database.GetConnection();
+			var id = conn.Query(SQL_Upsert, i);
+			return true;
+//			IEnumerator<decimal> e = id.GetEnumerator();
+//
+//			int? gid = null;
+//			if (e.MoveNext())
+//			{
+//				gid = Convert.ToInt32(e.Current);
+//				i.ItemId = gid.Value;
+//			}
+//			return gid.HasValue;
 		}
 		public static Item GetFirstModel(int id)
 		{

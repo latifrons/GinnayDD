@@ -8,7 +8,8 @@ namespace TaobaoSpider.Model
 	public class Item
 	{
 		private int itemID;
-		private int uniqID;
+		private long uniqID;
+		private long taobaoID;
 		private string name;
 		private double price;
 		private double freight;
@@ -23,7 +24,7 @@ namespace TaobaoSpider.Model
 			set { itemID = value; }
 		}
 
-		public int UniqId
+		public long UniqId
 		{
 			get { return uniqID; }
 			set { uniqID = value; }
@@ -69,6 +70,12 @@ namespace TaobaoSpider.Model
 		{
 			get { return recentDeal; }
 			set { recentDeal = value; }
+		}
+
+		public long TaobaoId
+		{
+			get { return taobaoID; }
+			set { taobaoID = value; }
 		}
 
 		public override string ToString()

@@ -8,7 +8,7 @@ namespace TaobaoSpider.Model
 	public class Seller
 	{
 		private int sellerId;
-		private int taobaoID;
+		private long taobaoID;
 		private int? credit;
 		private DateTime? startTime;
 		private double rmatch;
@@ -41,7 +41,7 @@ namespace TaobaoSpider.Model
 		/// <summary>
 		/// 卖家淘宝ID（纯数字）
 		/// </summary>
-		public int TaobaoId
+		public long TaobaoId
 		{
 			get { return taobaoID; }
 			set { taobaoID = value; }

@@ -89,7 +89,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Distributed\ProxyPool\AbstractProxyPool.cs" />
-    <Compile Include="Distributed\ProxyPool\DirectPool.cs" />
+    <Compile Include="Distributed\ProxyPool\DirectProxyPool.cs" />
     <Compile Include="Distributed\ProxyPool\IntervalProxyPool.cs" />
     <Compile Include="Distributed\TaskGuide\AbstractTaskGuide.cs" />
     <Compile Include="Distributed\ContentProcessResult.cs" />

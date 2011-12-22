@@ -2,12 +2,21 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Ginnay.ProxySpider;
 
 namespace Ginnaydd.Distributed.ProxyPool
 {
-	public class DirectPool : AbstractProxyPool
+	public class DirectProxyPool : AbstractProxyPool
 	{
+		private int restTime;
+
+		public int RestTime
+		{
+			get { return restTime; }
+			set { restTime = value; }
+		}
+
 		public override ProxyInfo DequeueProxy()
 		{
 			return new ProxyInfo
@@ -18,6 +27,7 @@ namespace Ginnaydd.Distributed.ProxyPool
 
 		public override void EnqueueProxy(ProxyInfo proxyinfo)
 		{
+			Thread.Sleep(restTime);
 			return;
 		}
 

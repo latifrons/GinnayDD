@@ -21,10 +21,10 @@ namespace TaobaoSpider
 		[STAThread]
 		static void Main()
 		{
-//			Instance i = new Instance();
-//			Application.EnableVisualStyles();
-//			Application.SetCompatibleTextRenderingDefault(false);
-//			Application.Run(new Form1(i));
+			Instance i = new Instance();
+			Application.EnableVisualStyles();
+			Application.SetCompatibleTextRenderingDefault(false);
+			Application.Run(new Form1(i));
 
 //			Item i = new Item
 //			         	{
@@ -41,23 +41,23 @@ namespace TaobaoSpider
 
 //			Item i = OpsItem.GetFirstModel(2);			
 //			i = OpsItem.GetFirstModel(3);
-			string s = File.ReadAllText("f:/dev/user.htm",Encoding.GetEncoding("GB2312"));
-			TaskData td = new TaskData
-							{
-								Bytes = Encoding.Default.GetBytes(s),
-								ProxyInfo = null,
-								Task = new Task
-								       	{
-											Url = @"http://rate.taobao.com/user-rate-ff176d877242acae0c43891b47b78d90.htm",
-											Type = (int)TaobaoTaskType.PROVIDER_RATE,
-											Context = "324123",
-											
-								       	}
-							};
-			TaobaoTaskGuide g = new TaobaoTaskGuide();
-			g.EnqueueProcessTask(td.Task,td.Bytes,td.ProxyInfo);
-			g.StartProcess();
-			Console.ReadKey();
+//			string s = File.ReadAllText("f:/dev/user.htm",Encoding.GetEncoding("GB2312"));
+//			TaskData td = new TaskData
+//							{
+//								Bytes = Encoding.Default.GetBytes(s),
+//								ProxyInfo = null,
+//								Task = new Task
+//								       	{
+//											Url = @"http://rate.taobao.com/user-rate-ff176d877242acae0c43891b47b78d90.htm",
+//											Type = (int)TaobaoTaskType.PROVIDER_RATE,
+//											Context = "324123",
+//											
+//								       	}
+//							};
+//			TaobaoTaskGuide g = new TaobaoTaskGuide();
+//			g.EnqueueProcessTask(td.Task,td.Bytes,td.ProxyInfo);
+//			g.StartProcess();
+//			Console.ReadKey();
 		}
 	}
 	

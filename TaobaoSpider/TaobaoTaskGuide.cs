@@ -23,6 +23,8 @@ namespace TaobaoSpider
 		static Regex RegexUniqID = new Regex(@"uniqpid=(?<number>-?\d+)");
 		static Regex RegexCreateTime = new Regex(@"创店时间.+(?<time>\d{4}-\d{2}-\d{2})");
 
+		static Regex RegexItemTaobaoID = new Regex(@"item\.htm\?id=(?<number>\d+)");
+
 		static Regex RegexEmpty = new Regex(@"\s+");
 
 		private static string UNIQ_ID = @"uniqID=";
@@ -119,20 +121,27 @@ namespace TaobaoSpider
 				return;
 			}
 			s.TaobaoId = Int32.Parse(tp.TaskData.Task.Context);
-			string credit = HAH.SafeGetSuccessorInnerText(root, @".//ul[@class='sep']/li/text()");
-			if (string.IsNullOrEmpty(credit))
-			{
-				LogMissing("credit",credit);
-				tp.CpResult.Success = false;
-				return;
-			}
-			credit = RegexEmpty.Replace(credit, "");
-			//卖家信用：5
-			s.Credit = int.Parse(credit.Substring(5));
-			string goodRate = HAH.SafeGetSuccessorInnerText(root, @".//div[@id='seller-rate']//em");
-			//好评率：98.30%
-			s.Goodrate = double.Parse(goodRate.Substring(4, goodRate.IndexOf("%") - 4));
 			s.IsTmall = root.SelectSingleNode(@".//div[@class='tmall-pro']") != null;
+
+			if (!s.IsTmall)
+			{
+				string credit = HAH.SafeGetSuccessorInnerText(root, @".//ul[contains(@class,'sep')]/li");
+				if (string.IsNullOrEmpty(credit))
+				{
+					LogMissing("credit", credit);
+					tp.CpResult.Success = false;
+					return;
+				}
+				credit = RegexEmpty.Replace(credit, "");
+				//卖家信用：5
+				s.Credit = int.Parse(credit.Substring(5));
+				string goodRate = HAH.SafeGetSuccessorInnerText(root, @".//div[@id='seller-rate']//em");
+				//好评率：98.30%
+				s.Goodrate = double.Parse(goodRate.Substring(4, goodRate.IndexOf("%") - 4));
+			}
+			
+			
+			
 //
 //			HtmlNodeCollection infos = root.SelectNodes(@".//div[@class='bd']/ul/li");
 //			foreach (HtmlNode node in infos)
@@ -148,54 +157,58 @@ namespace TaobaoSpider
 			//半年动态评分
 			{
 				HtmlNodeCollection nodes = root.SelectNodes(@".//div[@id='sixmonth']//div[@class='item-scrib']");
-				foreach (var node in nodes)
+				if (nodes != null)
 				{
-					string title = HAH.SafeGetSuccessorInnerText(node, @"./span[@class='title']");
-					string count = HAH.SafeGetSuccessorInnerText(node, @"./em[@class='count']");
-					HtmlNode percent = node.SelectSingleNode(@".//strong[contains(@class,'percent')]");
-					if (percent == null)
+					foreach (var node in nodes)
 					{
-						LogMissing(title,"Percent");
-						continue;
-					}
+						string title = HAH.SafeGetSuccessorInnerText(node, @"./span[@class='title']");
+						string count = HAH.SafeGetSuccessorInnerText(node, @"./em[@class='count']");
+						HtmlNode percent = node.SelectSingleNode(@".//strong[contains(@class,'percent')]");
+						if (percent == null)
+						{
+							LogMissing(title, "Percent");
+							continue;
+						}
 
-					double c;
-					if (!double.TryParse(count, out c))
-					{
-						LogMissing(title,count);
-						continue;
-					}
+						double c;
+						if (!double.TryParse(count, out c))
+						{
+							LogMissing(title, count);
+							continue;
+						}
 
-					double d;
-					string rate = percent.InnerText.Replace("%","");
-					if (rate=="----")
-					{
-						d = 0;
-					}else if (!double.TryParse(rate,out d))
-					{
-						LogMissing(title,rate);
-						continue;
-					}
-					string percentClass = percent.Attributes["class"].Value;
-					if (percentClass.Contains("lower"))
-					{
-						d *= -1.0;
-					}
-					
-					if (title == "宝贝与描述相符：")
-					{
-						s.Rmatch = c;
-						s.Pmatch = d;
-					}
-					else if (title == "卖家的服务态度：")
-					{
-						s.Rservice = c;
-						s.Pservice = d;
-					}
-					else if (title == "卖家发货的速度：")
-					{
-						s.Rspeed = c;
-						s.Pspeed = d;
+						double d;
+						string rate = percent.InnerText.Replace("%", "");
+						if (rate == "----")
+						{
+							d = 0;
+						}
+						else if (!double.TryParse(rate, out d))
+						{
+							LogMissing(title, rate);
+							continue;
+						}
+						string percentClass = percent.Attributes["class"].Value;
+						if (percentClass.Contains("lower"))
+						{
+							d *= -1.0;
+						}
+
+						if (title == "宝贝与描述相符：")
+						{
+							s.Rmatch = c;
+							s.Pmatch = d;
+						}
+						else if (title == "卖家的服务态度：")
+						{
+							s.Rservice = c;
+							s.Pservice = d;
+						}
+						else if (title == "卖家发货的速度：")
+						{
+							s.Rspeed = c;
+							s.Pspeed = d;
+						}
 					}
 				}
 			}
@@ -210,7 +223,10 @@ namespace TaobaoSpider
 			}
 			else
 			{
-				LogMissing("Warrenty", text);
+				s.Pprotect = false;
+				s.Psevendays = false;
+				s.Preal = false;
+				s.Pinvoice = false;
 			}
 			
 
@@ -244,7 +260,7 @@ namespace TaobaoSpider
 					}
 				}
 			}*/
-			OpsSeller.Insert(s);
+			OpsSeller.Upsert(s);
 		}
 
 		private void HandleProviderList(TaskProcess tp)
@@ -285,7 +301,7 @@ namespace TaobaoSpider
 			#region build an item
 			Item i = new Item();
 
-			string freight = HAH.SafeGetSuccessorInnerText(node, @".//li[@class='price']/span[@class='shipping']");
+			string freight = HAH.SafeGetSuccessorInnerText(node, @".//li[contains(@class,'price')]//span[@class='shipping']");
 			if (freight != null && freight.Length > 3)
 			{
 				//运费：8.00
@@ -313,13 +329,13 @@ namespace TaobaoSpider
 				LogMissing("Name", node.InnerHtml);
 				return false;
 			}
-			i.Location = HAH.SafeGetSuccessorInnerText(node, @".//li[@class='place']/div[@class='loc']");
+			i.Location = HAH.SafeGetSuccessorInnerText(node, @".//li[@class='place-attr']");
 			if (i.Location == null)
 			{
 				LogMissing("Location", node.InnerHtml);
 				return false;
 			}
-			string price = HAH.SafeGetSuccessorInnerText(node, @".//li[@class='price']/em");
+			string price = HAH.SafeGetSuccessorInnerText(node, @".//li[@class='price-attr']//em");
 			if (!string.IsNullOrEmpty(price))
 			{
 				//359.00
@@ -341,7 +357,7 @@ namespace TaobaoSpider
 			}
 
 			i.RecentDeal = 0;
-			string recentDeal = HAH.SafeGetSuccessorInnerText(node, @".//li[@class='sale']/text()");
+			string recentDeal = HAH.SafeGetSuccessorInnerText(node, @".//li[@class='sale-attr']/text()");
 
 			if (!string.IsNullOrEmpty(recentDeal))
 			{
@@ -352,7 +368,7 @@ namespace TaobaoSpider
 				}
 			}
 
-			string sellerID = HAH.SafeGetSuccessorAttributeStringValue(node, @".//p[contains(@class,'seller')]/a", "href");
+			string sellerID = HAH.SafeGetSuccessorAttributeStringValue(node, @".//li[@class='business-attr']/p[1]/a", "href");
 
 			if (!string.IsNullOrEmpty(sellerID))
 			{
@@ -373,10 +389,22 @@ namespace TaobaoSpider
 				return false;
 			}
 
-			i.UniqId = 0;
+			i.UniqId = int.Parse(tp.TaskData.Task.Context);
 			i.UrlLink = HAH.SafeGetSuccessorAttributeStringValue(node, ".//a[@class='EventCanSelect']", "href");
+			i.UrlLink = FixRelativeURL(i.UrlLink, tp.TaskData.Task.Host);
 
-			OpsItem.Insert(i);
+			if (!string.IsNullOrEmpty(i.UrlLink))
+			{
+				string taobaoID;
+				Match m = RegexItemTaobaoID.Match(i.UrlLink);
+				if (m.Success)
+				{
+					taobaoID = m.Groups["number"].Value;
+					i.TaobaoId = long.Parse(taobaoID);
+				}
+			}
+			
+			OpsItem.Upsert(i);
 			#endregion
 			#region build new task
 			//Seller
@@ -450,6 +478,18 @@ namespace TaobaoSpider
 					break;
 				}
 			}
+			//next page
+			string nextPageURL = HAH.SafeGetSuccessorAttributeStringValue(root, @".//a[@class='page-next']","href");
+			if (nextPageURL != null)
+			{
+				tp.CpResult.NewTasks.Add(new Task
+				{
+					Url = FixRelativeURL(nextPageURL, tp.TaskData.Task.Host),
+					Type = (int)TaobaoTaskType.COMBINED_LIST,
+				});
+			}
+			
+
 			tp.CpResult.Success = success;
 		}
 
@@ -554,8 +594,20 @@ namespace TaobaoSpider
 
 			i.UniqId = 0;
 			i.UrlLink = HAH.SafeGetSuccessorAttributeStringValue(node, ".//a[@class='EventCanSelect']", "href");
+			i.UrlLink = FixRelativeURL(i.UrlLink, tp.TaskData.Task.Host);
 
-			OpsItem.Insert(i);
+			if (!string.IsNullOrEmpty(i.UrlLink))
+			{
+				string taobaoID;
+				Match m = RegexItemTaobaoID.Match(i.UrlLink);
+				if (m.Success)
+				{
+					taobaoID = m.Groups["number"].Value;
+					i.TaobaoId = long.Parse(taobaoID);
+				}
+			}
+
+			OpsItem.Upsert(i);
 			#endregion
 			#region build new task
 			//Seller
@@ -563,7 +615,7 @@ namespace TaobaoSpider
 										{
 											Url = RateURL.Replace("#UID#", i.SellerTaobaoId.ToString()),
 											Type = (int)TaobaoTaskType.PROVIDER_RATE,
-											Context = sellerID
+											Context = i.SellerTaobaoId.ToString()
 										});
 			#endregion
 
