@@ -293,6 +293,17 @@ namespace TaobaoSpider
 					break;
 				}
 			}
+			//next page
+			string nextPageURL = HAH.SafeGetSuccessorAttributeStringValue(root, @".//a[@class='page-next']", "href");
+			if (nextPageURL != null)
+			{
+				tp.CpResult.NewTasks.Add(new Task
+				{
+					Url = FixRelativeURL(nextPageURL, tp.TaskData.Task.Host),
+					Type = (int)TaobaoTaskType.PROVIDER_LIST,
+					Context = tp.TaskData.Task.Context
+				});
+			}
 			tp.CpResult.Success = success;
 		}
 
