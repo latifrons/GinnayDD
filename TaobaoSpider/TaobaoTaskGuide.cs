@@ -134,7 +134,15 @@ namespace TaobaoSpider
 				}
 				credit = RegexEmpty.Replace(credit, "");
 				//卖家信用：5
-				s.Credit = int.Parse(credit.Substring(5));
+				int crediti;
+				if (credit.Length > 5 && int.TryParse(credit.Substring(5), out crediti))
+				{
+					s.Credit = crediti;
+				}
+				else {
+					LogMissing("Credit", credit.Substring(5));
+				}
+				
 				string goodRate = HAH.SafeGetSuccessorInnerText(root, @".//div[@id='seller-rate']//em");
 				//好评率：98.30%
 				s.Goodrate = double.Parse(goodRate.Substring(4, goodRate.IndexOf("%") - 4));
