@@ -68,6 +68,7 @@
     <Compile Include="Model\Seller.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TaobaoSelectiveIntervalProxyPool.cs" />
     <Compile Include="TaobaoTaskGuide.cs" />
     <Compile Include="TaobaoTaskHelper.cs" />
     <EmbeddedResource Include="Form1.resx">

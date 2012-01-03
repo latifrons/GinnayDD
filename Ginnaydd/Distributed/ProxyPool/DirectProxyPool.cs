@@ -17,7 +17,7 @@ namespace Ginnaydd.Distributed.ProxyPool
 			set { restTime = value; }
 		}
 
-		public override ProxyInfo DequeueProxy()
+		public override ProxyInfo DequeueProxy(Task task)
 		{
 			return new ProxyInfo
 			       	{

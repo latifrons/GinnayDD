@@ -121,7 +121,7 @@ namespace Ginnaydd.Distributed.ProxyPool
 			}
 		}
 
-		public override ProxyInfo DequeueProxy()
+		public override ProxyInfo DequeueProxy(Task task)
 		{
 			return readyQueue.ConsumeValue();
 		}
