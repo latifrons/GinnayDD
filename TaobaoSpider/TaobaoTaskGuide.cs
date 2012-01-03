@@ -145,7 +145,22 @@ namespace TaobaoSpider
 				
 				string goodRate = HAH.SafeGetSuccessorInnerText(root, @".//div[@id='seller-rate']//em");
 				//好评率：98.30%
-				s.Goodrate = double.Parse(goodRate.Substring(4, goodRate.IndexOf("%") - 4));
+				if (!string.IsNullOrEmpty(goodRate) && goodRate.IndexOf('%') >= 4)
+				{
+					double goodrated;
+					if (double.TryParse(goodRate.Substring(4, goodRate.IndexOf("%") - 4), out goodrated))
+					{
+						s.Goodrate = goodrated;
+					}
+					else
+					{
+						LogMissing("GoodRate", goodRate);
+					}
+				}
+				else
+				{
+					LogMissing("GoodRate", goodRate);
+				}
 			}
 			
 			

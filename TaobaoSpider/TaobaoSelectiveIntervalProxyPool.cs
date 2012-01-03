@@ -11,7 +11,7 @@ using PriorityQueueDemo;
 
 namespace TaobaoSpider
 {
-	public class TaobaoSelectiveIntervalProxyPool:AbstractProxyPool
+	public class TaobaoSelectiveIntervalProxyPool : AbstractProxyPool
 	{
 		public const int MAX_FAIL_TIMES = 3;
 		protected ProducerConsumerPriorityQueue<int, ProxyInfo> proxyReadyQueue = new ProducerConsumerPriorityQueue<int, ProxyInfo>();
@@ -24,7 +24,8 @@ namespace TaobaoSpider
 		private TimeSpan localRestTime;
 
 		private ProxyManager proxyManager;
-		private Thread daemonThread;
+		private List<Thread> daemonThreads = new List<Thread>();
+
 		private object daemonLocker = new object();
 		private TimeSpan daemonRestTime;
 		private int maxLocalConnections = 1;
@@ -37,12 +38,6 @@ namespace TaobaoSpider
 		public int RestCount
 		{
 			get { return proxyRestQueue.Count; }
-		}
-
-		public Thread DaemonThread
-		{
-			get { return daemonThread; }
-			set { daemonThread = value; }
 		}
 
 		public ProxyManager ProxyManager
@@ -84,44 +79,51 @@ namespace TaobaoSpider
 		public void StartDaemon()
 		{
 			Monitor.Enter(daemonLocker);
+			if (daemonThreads.Count == 0)
 			{
-				if (daemonThread != null)
-				{
-					Monitor.Exit(daemonLocker);
-					return;
-				}
-				canStop = false;
-				this.localReadyQueue.Clear();
-				this.localRestQueue.Clear();
-				for (int i = 0; i < maxLocalConnections; i++)
-				{
-					this.localReadyQueue.Produce(0, new ProxyInfo
-					                                	{
-					                                		HttpProxy =null
-					                                	});
-				}
+				Thread daemonLocalThread;
+				StartProxyDaemon(DaemonLocal, "DaemonLocal", out daemonLocalThread);
+				daemonThreads.Add(daemonLocalThread);
 
-				daemonThread = new Thread(Daemon);
-				daemonThread.Name = "SelectiveIntervalProxyPool_Daemon";
-				daemonThread.IsBackground = true;
+				Thread daemonProxyThread;
+				StartProxyDaemon(DaemonProxy, "DaemonProxy", out daemonProxyThread);
+				daemonThreads.Add(daemonProxyThread);
 			}
 			Monitor.Exit(daemonLocker);
-			daemonThread.Start();
 		}
+		private void StartProxyDaemon(ThreadStart func, string name, out Thread thread)
+		{
+			canStop = false;
+			this.localReadyQueue.Clear();
+			this.localRestQueue.Clear();
+			for (int i = 0; i < maxLocalConnections; i++)
+			{
+				this.localReadyQueue.Produce(0, new ProxyInfo
+				{
+					HttpProxy = null
+				});
+			}
+
+			thread = new Thread(func);
+			thread.Name = name;
+			thread.IsBackground = true;
+			thread.Start();
+		}
+
 		public void StopDaemon()
 		{
 			Monitor.Enter(daemonLocker);
 			canStop = true;
-			if (daemonThread != null)
+
+			foreach (Thread t in daemonThreads)
 			{
-				daemonThread.Join(5000);
-				daemonThread.Abort();
-				daemonThread = null;
+				t.Join(5000);
+				t.Abort();
 			}
+			daemonThreads.Clear();
 			Monitor.Exit(daemonLocker);
 		}
-
-		private void Daemon()
+		private void DaemonProxy()
 		{
 			ProxyInfo makeAlive;
 			while (!canStop)
@@ -150,6 +152,15 @@ namespace TaobaoSpider
 						proxyReadyQueue.Produce(tmp.RTT, tmp);
 					}
 				}
+				Thread.Sleep(daemonRestTime);
+			}
+		}
+
+		private void DaemonLocal()
+		{
+			ProxyInfo makeAlive;
+			while (!canStop)
+			{
 				//local queue
 				{
 					DateTime barrier = DateTime.Now - localRestTime;

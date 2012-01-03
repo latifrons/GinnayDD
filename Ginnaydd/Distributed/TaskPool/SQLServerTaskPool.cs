@@ -235,8 +235,8 @@ values(@url,@state,@retrytimes,@context,@type,@urlhash)";
 				{
 					case TaskState.NOT_FINISHED:
 						{
-							if (taskQueue.Count >= BUFFER_SIZE)
-							{
+//							if (taskQueue.Count >= BUFFER_SIZE)
+//							{
 								if (task.TaskId != 0)
 								{
 									try
@@ -253,11 +253,13 @@ values(@url,@state,@retrytimes,@context,@type,@urlhash)";
 								{
 									inserts.Add(eti.Task);
 								}
-							}
-							else
-							{
-								taskQueue.Produce(task);
-							}
+//							}
+//							else
+//							{
+////								taskQueue.Produce(task);
+//								//save to database
+//								inserts.Add(eti.Task);
+//							}
 							
 							break;
 						}
@@ -344,6 +346,7 @@ values(@url,@state,@retrytimes,@context,@type,@urlhash)";
 			                     		Task = task,
 										TaskState = TaskState.NOT_FINISHED
 			                     	});
+
 		}
 
 		public override void ProduceTasks(List<Task> tasks)
