@@ -46,9 +46,7 @@ namespace GinnayddGUI
 			proxyManager.ProxyValidator.LoadProxyValidations(ProxyValidateConditionParser.ReadConfig("config/proxyvalidate.xml"));
 			proxyManager.MaxValidateThreadCount = 20;
 
-			workerManager.ProxyPool = proxyPool;
-			workerManager.TaskPool = sqlServerTaskPool;
-			workerManager.TaskGuide = taobaoTaskGuide;
+			
 
 			proxyPool = new TaobaoSelectiveIntervalProxyPool();
 			proxyPool.LocalRestTime = new TimeSpan(0,0,5);
@@ -56,6 +54,10 @@ namespace GinnayddGUI
 			proxyPool.ProxyManager = proxyManager;
 			proxyPool.DaemonRestTime = new TimeSpan(0,0,1);
 			proxyPool.ProxyRestTime = new TimeSpan(0,0,5);
+
+			workerManager.ProxyPool = proxyPool;
+			workerManager.TaskPool = sqlServerTaskPool;
+			workerManager.TaskGuide = taobaoTaskGuide;
 
 //			directProxyPool.ProxyManager = proxyManager;
 //			directProxyPool.DaemonRestTime = 1000;
