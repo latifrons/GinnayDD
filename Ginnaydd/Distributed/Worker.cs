@@ -100,7 +100,7 @@ namespace Ginnaydd.Distributed
 				task = TaskPool.ConsumeTask();
 				if (taskGuide.ShouldDownload(task))
 				{
-					proxyInfo = ProxyPool.DequeueProxy();
+					proxyInfo = ProxyPool.DequeueProxy(task);
 
 					workerManager.ReportFetching();
 					DoFetchWork();

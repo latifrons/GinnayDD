@@ -8,7 +8,7 @@ namespace Ginnaydd.Distributed.ProxyPool
 {
 	public abstract class AbstractProxyPool
 	{
-		public abstract ProxyInfo DequeueProxy();
+		public abstract ProxyInfo DequeueProxy(Task task);
 		public abstract void EnqueueProxy(ProxyInfo proxyinfo);
 		public abstract void FailProxy(ProxyInfo proxyInfo);
 	}

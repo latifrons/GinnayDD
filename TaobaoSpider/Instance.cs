@@ -17,18 +17,17 @@ namespace GinnayddGUI
 	{
 		public WorkerManager workerManager;
 		//public IntervalProxyPool intervalProxyPool;
-		public DirectProxyPool directProxyPool;
+		public TaobaoSelectiveIntervalProxyPool proxyPool;
 		public SQLServerTaskPool sqlServerTaskPool;
 		public TaobaoTaskGuide taobaoTaskGuide;
 		public string storePath = @"E:\Dev\Grab4\";
 //		private const string dbConnectionString = @"Data Source=localhost;Initial Catalog=TaobaoGrab;User Id=sa;Password=1;";
-//		private ProxyManager proxyManager;
+		private ProxyManager proxyManager;
 
 		public Instance()
 		{
 			workerManager = new WorkerManager();
-			directProxyPool = new DirectProxyPool();
-			directProxyPool.RestTime = 5000;
+
 			sqlServerTaskPool = new SQLServerTaskPool();
 //			sqlServerTaskPool.ConnectionString = dbConnectionString;
 			sqlServerTaskPool.InitTable();
@@ -40,16 +39,23 @@ namespace GinnayddGUI
 			taobaoTaskGuide.GlobalTimeout = 60000;
 			taobaoTaskGuide.MaxWorkers = 1;
 
-//			proxyManager = new ProxyManager();
-//			proxyManager.DaemonRestTime = 1000;
-//			proxyManager.LoadProxyProviders(ProxyProviderParser.ReadConfig("config/proxyprovider.xml"));
-//			proxyManager.ProxyValidator = new ProxyValidator();
-//			proxyManager.ProxyValidator.LoadProxyValidations(ProxyValidateConditionParser.ReadConfig("config/proxyvalidate.xml"));
-//			proxyManager.MaxValidateThreadCount = 20;
+			proxyManager = new ProxyManager();
+			proxyManager.DaemonRestTime = 1000;
+			proxyManager.LoadProxyProviders(ProxyProviderParser.ReadConfig("config/proxyprovider.xml"));
+			proxyManager.ProxyValidator = new ProxyValidator();
+			proxyManager.ProxyValidator.LoadProxyValidations(ProxyValidateConditionParser.ReadConfig("config/proxyvalidate.xml"));
+			proxyManager.MaxValidateThreadCount = 20;
 
-			workerManager.ProxyPool = directProxyPool;
+			workerManager.ProxyPool = proxyPool;
 			workerManager.TaskPool = sqlServerTaskPool;
 			workerManager.TaskGuide = taobaoTaskGuide;
+
+			proxyPool = new TaobaoSelectiveIntervalProxyPool();
+			proxyPool.LocalRestTime = new TimeSpan(0,0,5);
+			proxyPool.MaxLocalConnections = 1;
+			proxyPool.ProxyManager = proxyManager;
+			proxyPool.DaemonRestTime = new TimeSpan(0,0,1);
+			proxyPool.ProxyRestTime = new TimeSpan(0,0,5);
 
 //			directProxyPool.ProxyManager = proxyManager;
 //			directProxyPool.DaemonRestTime = 1000;
@@ -59,8 +65,8 @@ namespace GinnayddGUI
 		{
 			workerManager.StartAll();
 			sqlServerTaskPool.StartDaemon();
-//			directProxyPool.StartDaemon();
-//			proxyManager.StartDaemon();
+			proxyPool.StartDaemon();
+			proxyManager.StartDaemon();
 			taobaoTaskGuide.StartProcess();
 		}
 		public void Stop()
@@ -68,10 +74,10 @@ namespace GinnayddGUI
 			workerManager.StopAll();
 
 			sqlServerTaskPool.StopDaemon();
-//			intervalProxyPool.StopDaemon();
-//			proxyManager.StopDownloadProxies();
-//			proxyManager.StopValidateProxies();
-//			proxyManager.StopDaemon();
+			proxyPool.StopDaemon();
+			proxyManager.StopDownloadProxies();
+			proxyManager.StopValidateProxies();
+			proxyManager.StopDaemon();
 			taobaoTaskGuide.StopProcess();
 			//write all tasks in the memory to the sqlite
 			sqlServerTaskPool.Flush();
@@ -100,8 +106,8 @@ namespace GinnayddGUI
 		}
 		public int[] GetProxyPoolCount()
 		{
-			//return new int[]{intervalProxyPool.ReadyCount,intervalProxyPool.RestCount,proxyManager.GoodProxiesQueue.Count,proxyManager.PendingProxies.Count};
-			return new int[] {0, 0, 0, 0};
+			return new int[]{proxyPool.ReadyCount,proxyPool.RestCount,proxyManager.GoodProxiesQueue.Count,proxyManager.PendingProxies.Count};
+//			return new int[] {0, 0, 0, 0};
 		}
 	}
 }
